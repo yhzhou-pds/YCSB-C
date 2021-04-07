@@ -1,11 +1,13 @@
 
-
-ROCKSDB_INCLUDE=/home/lzw/nvm_rocksdb/test_rocksdb/include              #Rocksdb的头文件
-ROCKSDB_LIBRARY=/home/lzw/nvm_rocksdb/test_rocksdb/librocksdb.a   #Rocksdb的静态链接库
+# Rocksdb的头文件
+ROCKSDB_INCLUDE=/home/ubuntu/zyh/rocksdb/rocksdb-6.4.6/include
+ROCKSDB_LIBRARY=/home/ubuntu/zyh/rocksdb/rocksdb-6.4.6/librocksdb.a  
+#Rocksdb的静态链接库
+ROCKSDB_LIB=/home/ubuntu/zyh/rocksdb/rocksdb-6.4.6
 
 CC=g++
-CFLAGS=-std=c++11 -g -Wall -pthread -I./ 
-LDFLAGS= -lpthread -lrocksdb -lleveldb -lz -lsnappy -lpmem -lnuma
+CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB) -L$(ROCKSDB_LIBRARY)
+LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lpmem -lnuma -lzstd -lhdr_histogram
 SUBDIRS= core db 
 SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc)
 OBJECTS=$(SUBSRCS:.cc=.o)

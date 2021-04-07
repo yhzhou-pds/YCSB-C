@@ -6,13 +6,66 @@
 
 #include "rocksdb_db.h"
 #include "lib/coding.h"
+#include "rocksdb/status.h"
+#include "rocksdb/filter_policy.h"
+#include "rocksdb/table.h"
+#include <hdr/hdr_histogram.h>
+#include "rocksdb/persistent_cache.h"
 
 using namespace std;
 
 namespace ycsbc {
+
+
+
+    void RocksDB::latency_hiccup(uint64_t iops) {
+        //fprintf(f_hdr_hiccup_output_, "mean     95th     99th     99.99th   IOPS");
+        fprintf(f_hdr_hiccup_output_, "%-11.2lf %-8ld %-8ld %-8ld %-8ld\n",
+              hdr_mean(hdr_last_1s_),
+              hdr_value_at_percentile(hdr_last_1s_, 95),
+              hdr_value_at_percentile(hdr_last_1s_, 99),
+              hdr_value_at_percentile(hdr_last_1s_, 99.99),
+			  iops);
+        hdr_reset(hdr_last_1s_);
+        fflush(f_hdr_hiccup_output_);
+    }
+
     RocksDB::RocksDB(const char *dbfilename, utils::Properties &props) :noResult(0){
     
-        //set option
+        int r = hdr_init(1,INT64_C(3600000000),3,&hdr_);
+        r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_last_1s_);
+        r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_get_);
+        r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_put_);
+        r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_update_);
+        
+        if((0 != r) || (NULL == hdr_) || (NULL == hdr_last_1s_) 
+		    || (NULL == hdr_get_) || (NULL == hdr_put_) 
+		    || (NULL == hdr_update_) || (23552 < hdr_->counts_len)) {
+	      cout << "DEBUG- init hdrhistogram failed." << endl;
+      	      cout << "DEBUG- r=" << r << endl;
+	      cout << "DEBUG- histogram=" << &hdr_ << endl;
+	      cout << "DEBUG- counts_len=" << hdr_->counts_len << endl;
+	      cout << "DEBUG- counts:" << hdr_->counts << ", total_c:" << hdr_->total_count << endl;
+      	      cout << "DEBUG- lowest:" << hdr_->lowest_discernible_value << ", max:" <<hdr_->highest_trackable_value << endl;
+      	      free(hdr_);
+      	      exit(0);
+        }
+        
+  	f_hdr_output_= std::fopen("~/zyh/hdr/rocksdb-lat.hgrm", "w+");
+    	if(!f_hdr_output_) {
+      	    std::perror("hdr output file opening failed");
+      	    exit(0);
+   	}
+	
+	f_hdr_hiccup_output_ = std::fopen("~/zyh/hdr/rocksdb-lat.hiccup", "w+");
+    	
+	if(!f_hdr_hiccup_output_) {
+      	    std::perror("hdr hiccup output file opening failed");
+      	    exit(0);
+    	}   
+    	fprintf(f_hdr_hiccup_output_, "#mean       95th    99th    99.99th    IOPS\n");
+
+	//set option
         rocksdb::Options options;
         SetOptions(&options, props);
         
@@ -31,45 +84,81 @@ namespace ycsbc {
         options->compression = rocksdb::kNoCompression;
         options->enable_pipelined_write = true;
 
-        ////
+	rocksdb::BlockBasedTableOptions block_based_options;
+	options->max_bytes_for_level_base = 512ul * 1024 * 1024;
+	options->write_buffer_size = 128 * 1024 * 1024;
+	options->level_compaction_dynamic_level_bytes = 1;
+	options->target_file_size_base = 8 * 1024 * 1024;
+	options->max_background_compactions = 2;
+	options->max_background_flushes = 2;
+	options->use_direct_reads=true;
+	options->use_direct_io_for_flush_and_compaction=true;
 
+	//// set block based cache 8k
+
+	block_based_options.cache_index_and_filter_blocks = 0;
+ 	std::shared_ptr<const rocksdb::FilterPolicy> filter_policy(rocksdb::NewBloomFilterPolicy(24, 0));
+	block_based_options.filter_policy = filter_policy;
+	block_based_options.block_cache = rocksdb::NewLRUCache(8*1024);	
+	
+	//
         int dboption = stoi(props["dboption"]);
 
-        if ( dboption == 1) {  //RocksDB-L0-NVM: L0 have file path 
-#ifdef ROCKSDB_L0_NVM 
-            printf("set Rocksdb_L0_NVM options!\n");
-            options->level0_file_num_compaction_trigger = 4;
-            options->level0_slowdown_writes_trigger = 112;     
-            options->level0_stop_writes_trigger = 128;
-            options->level0_file_path = "/pmem/nvm";
+        if ( dboption == 1) {  //RocksDB
+       	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024}};
+       	
+	} else if ( dboption == 2 ) { // two path and no cache
+	    options->db_paths = {{"/home/ubuntu/zyh/data", 200L*1024*1024*1024},
+	                         {"/home/ubuntu/ssd/data", 200L*1024*1024*1024}};	  
+	
+	} else if( dboption == 3 ) { // mutant
+#ifdef MUTANT 
+	    options->db_paths = {{"/home/ubuntu/zyh/data", 200L*1024*1024*1024},                                	    {"/home/ubuntu/ssd/data", 200L*1024*1024*1024}};
+	    options->mutant_options.monitor_temp = true;
+	    options->mutant_options.migrate_sstables = true;
+	    options->mutant_options.calc_sst_placement = true;
+	    options->mutant_options.stg_cost_list = {0.528, 0.045};
+	    options->mutant_options.stg_cost_slo = 0.3;
+   	    options->mutant_options.stg_cost_slo_epsilon = 0.1;            
 #endif
-        }
-        else if ( dboption == 2 ) { //Matrixkv: 
-#ifdef MATRIXKV 
-            printf("set Matrixkv options!\n");
-            rocksdb::NvmSetup* nvm_setup = new rocksdb::NvmSetup();
-            nvm_setup->use_nvm_module = true;
-            nvm_setup->pmem_path = "/pmem/nvm";
-            options->nvm_setup.reset(nvm_setup);
-            options->max_background_jobs = 3;
-            options->max_bytes_for_level_base = 8ul * 1024 * 1024 * 1024;
-#endif 
-        }
+	} else if( dboption == 4 ) { // two path and has cache
+	
+            options->db_paths = {{"/home/ubuntu/zyh/data", 200L*1024*1024*1024},                                 {"/home/ubuntu/ssd/data", 200L*1024*1024*1024}};
+
+            // set pcache
+            rocksdb::Status status;
+            rocksdb::Env* env = rocksdb::Env::Default();
+            status = env->CreateDirIfMissing("/home/ubuntu/ssd/pcache");
+            assert(status.ok());
+            std::shared_ptr<rocksdb::Logger> read_cache_logger;
+            status = rocksdb::NewPersistentCache(env,"/home/ubuntu/ssd/pcache",
+                            500ul*1024*1024, read_cache_logger,
+                            true, &block_based_options.persistent_cache);
+            assert(status.ok());
+	
+	}
         
+	options->table_factory.reset(
+               rocksdb::NewBlockBasedTableFactory(block_based_options));
     }
 
 
     int RocksDB::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
                       std::vector<KVPair> &result) {
         string value;
+	uint64_t tx_begin_time = get_now_micros();
         rocksdb::Status s = db_->Get(rocksdb::ReadOptions(),key,&value);
-        if(s.ok()) {
-            //printf("value:%lu\n",value.size());
+        uint64_t tx_xtime = get_now_micros() - tx_begin_time;
+	if(tx_xtime > 3600000000) {
+	    cout << "too large tx_xtime" << endl;
+	} else {
+	    hdr_record_value(hdr_, tx_xtime);
+	    hdr_record_value(hdr_last_1s_, tx_xtime);
+	    hdr_record_value(hdr_last_1s_, tx_xtime);
+	}
+
+	if(s.ok()) {
             DeSerializeValues(value, result);
-            /* printf("get:key:%lu-%s\n",key.size(),key.data());
-            for( auto kv : result) {
-                printf("get field:key:%lu-%s value:%lu-%s\n",kv.first.size(),kv.first.data(),kv.second.size(),kv.second.data());
-            } */
             return DB::kOK;
         }
         if(s.IsNotFound()){
@@ -105,12 +194,19 @@ namespace ycsbc {
         rocksdb::Status s;
         string value;
         SerializeValues(values,value);
-        /* printf("put:key:%lu-%s\n",key.size(),key.data());
-        for( auto kv : values) {
-            printf("put field:key:%lu-%s value:%lu-%s\n",kv.first.size(),kv.first.data(),kv.second.size(),kv.second.data());
-        } */
-        s = db_->Put(rocksdb::WriteOptions(), key, value);
-        if(!s.ok()){
+        uint64_t tx_begin_time = get_now_micros();
+	s = db_->Put(rocksdb::WriteOptions(), key, value);
+        
+	uint64_t tx_xtime = get_now_micros() - tx_begin_time;
+        if(tx_xtime > 3600000000) {
+            cout << "too large tx_xtime" << endl;
+        } else {
+            hdr_record_value(hdr_, tx_xtime);
+            hdr_record_value(hdr_last_1s_, tx_xtime);
+            hdr_record_value(hdr_last_1s_, tx_xtime);
+        }
+
+	if(!s.ok()){
             cerr<<"insert error\n"<<endl;
             exit(0);
         }
@@ -119,7 +215,24 @@ namespace ycsbc {
     }
 
     int RocksDB::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
-        return Insert(table,key,values);
+        rocksdb::Status s;
+	string value;
+	SerializeValues(values,value);
+	uint64_t tx_begin_time = get_now_micros();
+	s = db_->Put(rocksdb::WriteOptions(), key, value);
+        uint64_t tx_xtime = get_now_micros() - tx_begin_time;
+        if(tx_xtime > 3600000000) {
+            cout << "too large tx_xtime" << endl;
+        } else {
+            hdr_record_value(hdr_, tx_xtime);
+            hdr_record_value(hdr_last_1s_, tx_xtime);
+            hdr_record_value(hdr_last_1s_, tx_xtime);
+        }
+	
+	if(!s.ok()) {
+	   cout << "UPD() ERROR! error code: " << s.ToString() << endl;
+	} 
+	return DB::kOK;
     }
 
     int RocksDB::Delete(const std::string &table, const std::string &key) {
@@ -137,14 +250,55 @@ namespace ycsbc {
         string stats;
         db_->GetProperty("rocksdb.stats",&stats);
         cout<<stats<<endl;
+ 
+	cout << "-------------------------------" << endl;
+	cout << "SUMMARY latency (us) of this run with HDR measurement" << endl;
+	cout << "         ALL        GET        PUT        UPD" << endl;
+	fprintf(stdout, "mean     %-10lf %-10lf %-10lf %-10lf\n",
+		hdr_mean(hdr_),
+		hdr_mean(hdr_get_),
+		hdr_mean(hdr_put_),
+		hdr_mean(hdr_update_));
+	fprintf(stdout, "95th     %-10ld %-10ld %-10ld %-10ld\n",
+		hdr_value_at_percentile(hdr_, 95),
+    		hdr_value_at_percentile(hdr_get_, 95),
+		hdr_value_at_percentile(hdr_put_, 95),
+		hdr_value_at_percentile(hdr_update_, 95));
+        fprintf(stdout, "99th     %-10ld %-10ld %-10ld %-10ld\n",
+                hdr_value_at_percentile(hdr_, 99),
+                hdr_value_at_percentile(hdr_get_, 99),
+                hdr_value_at_percentile(hdr_put_, 99),
+                hdr_value_at_percentile(hdr_update_, 99));
+        fprintf(stdout, "99.99th  %-10ld %-10ld %-10ld %-10ld\n",
+                hdr_value_at_percentile(hdr_, 99.99),
+                hdr_value_at_percentile(hdr_get_, 99.99),
+                hdr_value_at_percentile(hdr_put_, 99.99),
+                hdr_value_at_percentile(hdr_update_, 99.99));
+	
+	int ret = hdr_percentiles_print(hdr_,f_hdr_output_,5,1.0,CLASSIC);
+	if( 0 != ret ){
+	    cout << "hdr percentile output print file error!" <<endl;
+	}
+	cout << "-------------------------------" << endl;
     }
 
     bool RocksDB::HaveBalancedDistribution() {
-        return db_->HaveBalancedDistribution();
+        return true;
+	//return db_->HaveBalancedDistribution();
     }
 
     RocksDB::~RocksDB() {
         printf("wait delete db\n");
+	
+        free(hdr_);
+        free(hdr_last_1s_);
+        free(hdr_get_);
+        free(hdr_put_);
+        free(hdr_update_);
+	rocksdb::Status s = db_->Close();
+	if(!s.ok()) {
+		printf("RocksDB Close() failed!\n");
+	}
         delete db_;
         printf("delete\n");
     }
