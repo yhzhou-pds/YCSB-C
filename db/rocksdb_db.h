@@ -27,6 +27,7 @@ namespace ycsbc {
         struct hdr_histogram* hdr_update_ = NULL;
         struct hdr_histogram* hdr_scan_ = NULL;
         struct hdr_histogram* hdr_delete_ = NULL;
+	struct hdr_histogram* hdr_rmw_ = NULL;
 
 	void latency_hiccup(uint64_t iops);
 	std::FILE* f_hdr_output_;
@@ -50,6 +51,8 @@ namespace ycsbc {
 
 
         int Delete(const std::string &table, const std::string &key);
+
+	void RecordTime(int op,uint64_t tx_xtime);
 
         void PrintStats();
 

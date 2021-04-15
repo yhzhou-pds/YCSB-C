@@ -9,25 +9,20 @@ pcache="/home/ubuntu/ssd/data/pcache"
 rm -rf $dbpath/*
 rm -rf $datapath1/*
 rm -rf $datapath2/*
-rm -rf $pcache/*
-rm -rf /home/ubuntu/ssd/data/data2/*
-rm -rf /home/ubuntu/zyh/data/data1/*
-
-
+#rm -rf $pcache/*
 
 if [ -n "$dbpath" ];then
 	    rm -f $dbpath/*
 fi
-./ycsbc -db rocksdb -dbpath $dbpath -threads 1 -P $workload -load true -dboption $2
+./ycsbc -db rocksdb -dbpath $dbpath -threads 1 -P $workload -load true -dboption 3
 
-echo date
 du -sbm $datapath1
 du -sbm $datapath2
-du -sbm $pcache
-
+#du -sbm $pcache
+sudo ~/cleancache.sh
 sleep 30
 
 echo "run"
-./ycsbc -db rocksdb -dbpath $dbpath -threads 1 -P $workload -run true -dboption $2 -dbstatistics true
+cgexec -g memory:mutant ./ycsbc -db rocksdb -dbpath $dbpath -threads 1 -P $workload -run true -dboption 3 -dbstatistics true
 echo "run"
 

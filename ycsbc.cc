@@ -38,6 +38,10 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
   ycsbc::Client client(*db, *wl);
   int oks = 0;
   int next_report_ = 0;
+  static uint64_t tiktok_start = get_now_micros();
+  static uint64_t tiktoks = 0;
+  static uint64_t iops = 0;
+
   for (int i = 0; i < num_ops; ++i) {
 
     if (i >= next_report_) {
@@ -55,6 +59,14 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
       oks += client.DoInsert();
     } else {
       oks += client.DoTransaction();
+      tiktoks = get_now_micros() - tiktok_start;
+      iops++;
+      if (tiktoks >= 1000000) {
+	      db->latency_hiccup(iops);
+	      tiktok_start = get_now_micros();
+	      tiktoks = 0;
+	      iops = 0;
+      }
     }
   }
   db->Close();
@@ -65,7 +77,7 @@ int main( const int argc, const char *argv[]) {
   utils::Properties props;
   Init(props);
   string file_name = ParseCommandLine(argc, argv, props);
-
+	
   ycsbc::DB *db = ycsbc::DBFactory::CreateDB(props);
   if (!db) {
     cout << "Unknown database name " << props["dbname"] << endl;
@@ -113,14 +125,15 @@ int main( const int argc, const char *argv[]) {
     // Peforms transactions
     ycsbc::CoreWorkload wl;
     wl.Init(props);
-
     actual_ops.clear();
     total_ops = stoi(props[ycsbc::CoreWorkload::OPERATION_COUNT_PROPERTY]);
+
     uint64_t run_start = get_now_micros();
     for (int i = 0; i < num_threads; ++i) {
       actual_ops.emplace_back(async(launch::async,
           DelegateClient, db, &wl, total_ops / num_threads, false));
     }
+
     assert((int)actual_ops.size() == num_threads);
     sum = 0;
     for (auto &n : actual_ops) {
