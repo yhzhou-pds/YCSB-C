@@ -11,6 +11,7 @@
 #include "rocksdb/table.h"
 #include <hdr/hdr_histogram.h>
 #include "rocksdb/persistent_cache.h"
+#include "rocksdb/status.h"
 
 //#define MUTANT
 #define PCACHE
@@ -71,9 +72,10 @@ namespace ycsbc {
 	//set option
         rocksdb::Options options;
         SetOptions(&options, props);
-	
+        printf("begin open db\n");	
         rocksdb::Status s = rocksdb::DB::Open(options,dbfilename,&db_);
-        if(!s.ok()){
+        printf("end open db\n");
+	if(!s.ok()){
             cout<<"Can't open rocksdb "<<dbfilename<<" "<<s.ToString()<<endl;
             exit(0);
         }
@@ -137,8 +139,8 @@ namespace ycsbc {
             status = env->CreateDirIfMissing("/home/ubuntu/ssd/data/pcache");
             assert(status.ok());
             std::shared_ptr<rocksdb::Logger> read_cache_logger;
-	    uint64_t pcache_size = 6.25*1024*1024*1024ul;
-            status = rocksdb::NewPersistentmyCache(env,"/home/ubuntu/ssd/data/pcache",pcache_size, read_cache_logger,
+	    uint64_t pcache_size = 3*1024*1024*1024ul;
+            status = rocksdb::NewPersistentCache(env,"/home/ubuntu/ssd/data/pcache",pcache_size, read_cache_logger,
                             true, &block_based_options.persistent_cache);
             assert(status.ok());
 #endif 	
@@ -160,10 +162,9 @@ namespace ycsbc {
         }
         if(s.IsNotFound()){
             noResult++;
-            //cerr<<"read not found:"<<noResult<<endl;
             return DB::kOK;
         }else{
-            cerr<<"read error"<<endl;
+            cout <<"RocksDB GET() ERROR! error string: "<< s.ToString() << endl;
             exit(0);
         }
     }
@@ -192,8 +193,8 @@ namespace ycsbc {
 	s = db_->Put(rocksdb::WriteOptions(), key, value);
         
 	if(!s.ok()){
-            cerr<<"insert error\n"<<endl;
-            exit(0);
+            cout <<"RocksDB PUT() ERROR! error string: "<< s.ToString() << endl;
+	    exit(0);
         }
        
         return DB::kOK;
@@ -207,8 +208,8 @@ namespace ycsbc {
         rocksdb::Status s;
         s = db_->Delete(rocksdb::WriteOptions(),key);
         if(!s.ok()){
-            cerr<<"Delete error\n"<<endl;
-            exit(0);
+            cout <<"RocksDB DEL() ERROR! error string: "<< s.ToString() << endl;
+	    exit(0);
         }
         return DB::kOK;
     }

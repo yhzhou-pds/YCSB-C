@@ -1,9 +1,13 @@
 
 # Rocksdb的头文件
-ROCKSDB_INCLUDE=/home/ubuntu/zyh/Cloud/rocksCloud/include
+#ROCKSDB_INCLUDE=/home/ubuntu/zyh/Cloud/rocksCloud/include
 # RocksDB 的静态链接库
-ROCKSDB_LIBRARY=/home/ubuntu/zyh/Cloud/rocksCloud/build/librocksdb.a  
-ROCKSDB_LIB=/home/ubuntu/zyh/Cloud/rocksCloud/build/
+#ROCKSDB_LIBRARY=/home/ubuntu/zyh/Cloud/rocksCloud/build/librocksdb.a 
+#ROCKSDB_LIB=/home/ubuntu/zyh/Cloud/rocksCloud/build/
+
+ROCKSDB_INCLUDE=/home/ubuntu/zyh/rocksdb/rocksdb-2path/include
+ROCKSDB_LIBRARY=/home/ubuntu/zyh/rocksdb/rocksdb-2path/build/librocksdb.a
+ROCKSDB_LIB=/home/ubuntu/zyh/rocksdb/rocksdb-2path/build/
 
 CC=g++
 CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB)
