@@ -56,13 +56,13 @@ namespace ycsbc {
       	      exit(0);
         }
         
-  	f_hdr_output_= std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hgrm", "w+");
+  	f_hdr_output_= std::fopen("/mnt/AEP1/ROCKSDB/rocksdb-lat.hgrm", "w+");
     	if(!f_hdr_output_) {
       	    std::perror("hdr output file opening failed");
       	    exit(0);
    	}
 	
-	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hiccup", "w+");	
+	f_hdr_hiccup_output_ = std::fopen("/mnt/AEP1/ROCKSDB/rocksdb-lat.hiccup", "w+");	
 	if(!f_hdr_hiccup_output_) {
       	    std::perror("hdr hiccup output file opening failed");
       	    exit(0);
@@ -107,9 +107,9 @@ namespace ycsbc {
 	block_based_options.block_cache = rocksdb::NewLRUCache(8*1024);	
 	
 	//
-        int dboption = stoi(props["dboption"]);
+    int dboption = stoi(props["dboption"]);
 
-        if ( dboption == 1) {  //RocksDB
+    if ( dboption == 1) {  //RocksDB
        	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024}};
 	
 	} else if ( dboption == 2 ) { // two path and no cache

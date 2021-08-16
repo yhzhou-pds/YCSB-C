@@ -1,7 +1,7 @@
 #/bin/bash
 
 workload="./workloads/workloada.spec"
-dbpath="/home/lzw/ceshi2"
+dbpath="/mnt/AEP1/ROCKSDB"
 
 
 if [ -n "$dbpath" ];then
