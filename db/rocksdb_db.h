@@ -34,23 +34,17 @@ namespace ycsbc {
 	std::FILE* f_hdr_hiccup_output_;
 
 
-        RocksDB(const char *dbfilename, utils::Properties &props);
-        int Read(const std::string &table, const std::string &key,
-                 const std::vector<std::string> *fields,
-                 std::vector<KVPair> &result);
+    RocksDB(const char *dbfilename, utils::Properties &props);
+    
+    int Read(uint64_t pinode,std::string& fname,uint64_t* inode);
 
-        int Scan(const std::string &table, const std::string &key,
-                 int len, const std::vector<std::string> *fields,
-                 std::vector<std::vector<KVPair>> &result);
+    int Scan(uint64_t pinode , std::vector<std::string>& fnames,std::vector<uint64_t>& inodes);
 
-        int Insert(const std::string &table, const std::string &key,
-                   std::vector<KVPair> &values);
+    int Insert(uint64_t pinode , std::string& fname , uint64_t inode);
 
-        int Update(const std::string &table, const std::string &key,
-                   std::vector<KVPair> &values);
+    int Update(uint64_t pinode , std::string& fname , uint64_t inode);
 
-
-        int Delete(const std::string &table, const std::string &key);
+    int Delete(uint64_t pinode , std::string& fname );
 
 	void RecordTime(int op,uint64_t tx_xtime);
 

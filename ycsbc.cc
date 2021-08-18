@@ -77,7 +77,7 @@ int main( const int argc, const char *argv[]) {
   utils::Properties props;
   Init(props);
   string file_name = ParseCommandLine(argc, argv, props);
-	
+  
   ycsbc::DB *db = ycsbc::DBFactory::CreateDB(props);
   if (!db) {
     cout << "Unknown database name " << props["dbname"] << endl;
@@ -101,7 +101,6 @@ int main( const int argc, const char *argv[]) {
     // Loads data
     ycsbc::CoreWorkload wl;
     wl.Init(props);
-
     uint64_t load_start = get_now_micros();
     total_ops = stoi(props[ycsbc::CoreWorkload::RECORD_COUNT_PROPERTY]);
     for (int i = 0; i < num_threads; ++i) {

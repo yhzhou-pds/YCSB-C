@@ -40,7 +40,7 @@ namespace ycsbc {
         r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_put_);
         r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_update_);
         r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_scan_);
-	r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_rmw_);
+        r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_rmw_);
 
         if((0 != r) || (NULL == hdr_) || (NULL == hdr_last_1s_) 
 		    || (NULL == hdr_get_) || (NULL == hdr_put_)
@@ -56,26 +56,26 @@ namespace ycsbc {
       	      exit(0);
         }
         
-  	f_hdr_output_= std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hgrm", "w+");
+        f_hdr_output_= std::fopen("/mnt/AEP1/ROCKSDB/rocksdb-lat.hgrm", "w+");
     	if(!f_hdr_output_) {
       	    std::perror("hdr output file opening failed");
       	    exit(0);
-   	}
+        }
 	
-	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hiccup", "w+");	
-	if(!f_hdr_hiccup_output_) {
+        f_hdr_hiccup_output_ = std::fopen("/mnt/AEP1/ROCKSDB/rocksdb-lat.hiccup", "w+");	
+        if(!f_hdr_hiccup_output_) {
       	    std::perror("hdr hiccup output file opening failed");
       	    exit(0);
     	}   
     	fprintf(f_hdr_hiccup_output_, "#mean       95th    99th    99.99th    IOPS\n");
 
-	//set option
+        //set option
         rocksdb::Options options;
         SetOptions(&options, props);
         printf("begin open db\n");	
         rocksdb::Status s = rocksdb::DB::Open(options,dbfilename,&db_);
         printf("end open db\n");
-	if(!s.ok()){
+        if(!s.ok()){
             cout<<"Can't open rocksdb "<<dbfilename<<" "<<s.ToString()<<endl;
             exit(0);
         }
@@ -107,9 +107,9 @@ namespace ycsbc {
 	block_based_options.block_cache = rocksdb::NewLRUCache(8*1024);	
 	
 	//
-        int dboption = stoi(props["dboption"]);
+    int dboption = stoi(props["dboption"]);
 
-        if ( dboption == 1) {  //RocksDB
+    if ( dboption == 1) {  //RocksDB
        	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024}};
 	
 	} else if ( dboption == 2 ) { // two path and no cache
@@ -151,13 +151,13 @@ namespace ycsbc {
     }
 
 
-    int RocksDB::Read(const std::string &table, const std::string &key, const std::vector<std::string> *fields,
-                      std::vector<KVPair> &result) {
-        string value;
+    int RocksDB::Read(uint64_t pinode,std::string& fname,uint64_t* inode) {
+        std::string value;
+        std::string key = std::to_string(pinode) + fname;
         rocksdb::Status s = db_->Get(rocksdb::ReadOptions(),key,&value);
 
-	if(s.ok()) {
-            DeSerializeValues(value, result);
+        if(s.ok()) {
+            *inode = *(uint64_t*)value.c_str();
             return DB::kOK;
         }
         if(s.IsNotFound()){
@@ -170,46 +170,51 @@ namespace ycsbc {
     }
 
 
-    int RocksDB::Scan(const std::string &table, const std::string &key, int len, const std::vector<std::string> *fields,
-                      std::vector<std::vector<KVPair>> &result) {
-         auto it=db_->NewIterator(rocksdb::ReadOptions());
+    int RocksDB::Scan(uint64_t pinode , std::vector<std::string>& fnames,std::vector<uint64_t>& inodes) {
+        std::string key = std::to_string(pinode);
+        auto it=db_->NewIterator(rocksdb::ReadOptions());
         it->Seek(key);
         std::string val;
         std::string k;
-        for(int i=0;i < len && it->Valid(); i++){
+        for(int i=0;it->Valid(); i++){
             k = it->key().ToString();
+            if(key.compare(k) > 0){
+                break;
+            }
             val = it->value().ToString();
+            fnames.push_back(k);
+            inodes.push_back(*(uint64_t*)val.c_str());
             it->Next();
         } 
         delete it;
         return DB::kOK;
     }
 
-    int RocksDB::Insert(const std::string &table, const std::string &key,
-                        std::vector<KVPair> &values){
+    int RocksDB::Insert(uint64_t pinode , std::string& fname , uint64_t inode){
         rocksdb::Status s;
-        string value;
-        SerializeValues(values,value);
-	s = db_->Put(rocksdb::WriteOptions(), key, value);
+        std::string key = std::to_string(pinode)+fname;
+        string value = std::to_string(inode);
+        s = db_->Put(rocksdb::WriteOptions(), key, value);
         
-	if(!s.ok()){
+        if(!s.ok()){
             cout <<"RocksDB PUT() ERROR! error string: "<< s.ToString() << endl;
-	    exit(0);
+            exit(0);
         }
        
         return DB::kOK;
     }
 
-    int RocksDB::Update(const std::string &table, const std::string &key, std::vector<KVPair> &values) {
-    	return Insert(table,key,values);
+    int RocksDB::Update(uint64_t pinode , std::string& fname , uint64_t inode) {
+    	return Insert(pinode,fname,inode);
     }
 
-    int RocksDB::Delete(const std::string &table, const std::string &key) {
+    int RocksDB::Delete(uint64_t pinode , std::string& fname ) {
         rocksdb::Status s;
+        std::string key = std::to_string(pinode)+fname;
         s = db_->Delete(rocksdb::WriteOptions(),key);
         if(!s.ok()){
             cout <<"RocksDB DEL() ERROR! error string: "<< s.ToString() << endl;
-	    exit(0);
+            exit(0);
         }
         return DB::kOK;
     }

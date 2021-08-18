@@ -5,9 +5,9 @@
 #ROCKSDB_LIBRARY=/home/ubuntu/zyh/Cloud/rocksCloud/build/librocksdb.a 
 #ROCKSDB_LIB=/home/ubuntu/zyh/Cloud/rocksCloud/build/
 
-ROCKSDB_INCLUDE=/home/ubuntu/zyh/rocksdb/rocksdb-2path/include
-ROCKSDB_LIBRARY=/home/ubuntu/zyh/rocksdb/rocksdb-2path/build/librocksdb.a
-ROCKSDB_LIB=/home/ubuntu/zyh/rocksdb/rocksdb-2path/build/
+ROCKSDB_INCLUDE=/home/mxh/rocksdb/include
+ROCKSDB_LIBRARY=/home/mxh/rocksdb/librocksdb.a
+ROCKSDB_LIB=/home/mxh/rocksdb
 
 CC=g++
 CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB)

@@ -41,10 +41,12 @@ class Client {
 };
 
 inline bool Client::DoInsert() {
-  std::string key = workload_.NextSequenceKey();
-  std::vector<DB::KVPair> pairs;
-  workload_.BuildValues(pairs);
-  return (db_.Insert(workload_.NextTable(), key, pairs) == DB::kOK);
+  uint64_t pinode = workload_.NextSequenceKey();
+  for(uint64_t i = 0 ; i < 1 ; i++){
+    std::string fname = std::to_string(i);
+    db_.Insert(pinode,fname,i);
+  }  
+  return true;
 }
 
 inline bool Client::DoTransaction() {
@@ -95,72 +97,51 @@ inline bool Client::DoTransaction() {
 }
 
 inline int Client::TransactionRead() {
-  const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> result;
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
-    return db_.Read(table, key, &fields, result);
-  } else {
-    return db_.Read(table, key, NULL, result);
+  const uint64_t &pinode = workload_.NextTransactionKey();
+  uint64_t inode;
+  for(uint64_t i = 0 ; i < 1 ; i++){
+    std::string fname = std::to_string(i);
+    db_.Read(pinode,fname,&inode);
   }
+  return 1;
 }
 
 inline int Client::TransactionReadModifyWrite() {
-  const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> result;
+  const uint64_t pinode = workload_.NextTransactionKey();
 
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
-    db_.Read(table, key, &fields, result);
-  } else {
-    db_.Read(table, key, NULL, result);
+  uint64_t inode ;
+  for(uint64_t i = 0 ; i < 1 ; i++){
+    std::string fname = std::to_string(i);
+    db_.Read(pinode,fname,&inode);
+    db_.Update(pinode,fname,inode+1);
   }
 
-  std::vector<DB::KVPair> values;
-  if (workload_.write_all_fields()) {
-    workload_.BuildValues(values);
-  } else {
-    workload_.BuildUpdate(values);
-  }
-  return db_.Update(table, key, values);
+  return 1;
 }
 
 inline int Client::TransactionScan() {
-  const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextTransactionKey();
-  int len = workload_.NextScanLength();
-  std::vector<std::vector<DB::KVPair>> result;
-  if (!workload_.read_all_fields()) {
-    std::vector<std::string> fields;
-    fields.push_back("field" + workload_.NextFieldName());
-    return db_.Scan(table, key, len, &fields, result);
-  } else {
-    return db_.Scan(table, key, len, NULL, result);
-  }
+  const uint64_t pinode = workload_.NextTransactionKey();
+  std::vector<std::string> fnames;
+  std::vector<uint64_t> inodes;
+  return db_.Scan(pinode, fnames, inodes);
 }
 
 inline int Client::TransactionUpdate() {
-  const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextTransactionKey();
-  std::vector<DB::KVPair> values;
-  if (workload_.write_all_fields()) {
-    workload_.BuildValues(values);
-  } else {
-    workload_.BuildUpdate(values);
+  const uint64_t pinode = workload_.NextTransactionKey();
+  for(uint64_t i = 0 ; i < 1 ; i++){
+    std::string fname = std::to_string(i);
+    db_.Update(pinode,fname,i+1);
   }
-  return db_.Update(table, key, values);
+  return 1;
 }
 
 inline int Client::TransactionInsert() {
-  const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextSequenceKey();
-  std::vector<DB::KVPair> values;
-  workload_.BuildValues(values);
-  return db_.Insert(table, key, values);
+  const uint64_t pinode = workload_.NextTransactionKey();
+  for(uint64_t i = 0 ; i < 1 ; i++){
+    std::string fname = std::to_string(i);
+    db_.Insert(pinode,fname,i);
+  }
+  return 1;
 } 
 
 } // ycsbc
