@@ -17,9 +17,10 @@ using ycsbc::DB;
 using ycsbc::DBFactory;
 
 DB* DBFactory::CreateDB(utils::Properties &props) {
-  if (props["dbname"] == "basic") {
-    return new BasicDB;
-  } else if (props["dbname"] == "rocksdb") {
+  // if (props["dbname"] == "basic") {
+  //   return new BasicDB;
+  // } else 
+  if (props["dbname"] == "rocksdb") {
     std::string dbpath = props.GetProperty("dbpath","/tmp/test-rocksdb");
     return new RocksDB(dbpath.c_str(), props);
   } else return NULL;
