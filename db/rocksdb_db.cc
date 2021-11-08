@@ -13,7 +13,7 @@
 #include "rocksdb/persistent_cache.h"
 
 //#define MUTANT
-#define PCACHE
+//#define PCACHE
 
 using namespace std;
 
@@ -55,13 +55,13 @@ namespace ycsbc {
       	      exit(0);
         }
         
-  	f_hdr_output_= std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hgrm", "w+");
+  	f_hdr_output_= std::fopen("/home/nvme0/wp/rocksdb-lat.hgrm", "w+");
     	if(!f_hdr_output_) {
       	    std::perror("hdr output file opening failed");
       	    exit(0);
    	}
 	
-	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/zyh/hdr/rocksdb-lat.hiccup", "w+");	
+	f_hdr_hiccup_output_ = std::fopen("/home/nvme0/wp/rocksdb-lat.hiccup", "w+");	
 	if(!f_hdr_hiccup_output_) {
       	    std::perror("hdr hiccup output file opening failed");
       	    exit(0);
@@ -108,40 +108,44 @@ namespace ycsbc {
         int dboption = stoi(props["dboption"]);
 
         if ( dboption == 1) {  //RocksDB
-       	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024}};
+       	    options->db_paths = {{"/home/nvme0/wp/db0", 200L*1024*1024*1024}};
 	
 	} else if ( dboption == 2 ) { // two path and no cache
-	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},
-	                         {"/home/ubuntu/zyh/data/data2", 200L*1024*1024*1024}};	  
+	    options->db_paths = {{"/home/nvme0/wp/db0", 60L*1024*1024*1024},
+	                         {"/home/nvme0/wp/db1", 60L*1024*1024*1024},
+                             {"/home/nvme0/wp/db2", 60L*1024*1024*1024},
+                             {"/home/nvme0/wp/db3", 60L*1024*1024*1024}};	  
 	
 	} else if( dboption == 3 ) { // mutant
-#ifdef MUTANT 
-	    printf("set mutant options\n");
-	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                               	    {"/home/ubuntu/zyh/data/data2", 200L*1024*1024*1024}};
-	    options->mutant_options.monitor_temp = true;
-	    options->mutant_options.migrate_sstables = true;
-	    options->mutant_options.calc_sst_placement = true;
-	    options->mutant_options.stg_cost_list = {0.528, 0.045};
-	    options->mutant_options.stg_cost_slo = 0.3;
-   	    options->mutant_options.stg_cost_slo_epsilon = 0.1;            
-#endif
+    printf("error not supported\n");
+// #ifdef MUTANT 
+// 	    printf("set mutant options\n");
+// 	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                               	    {"/home/ubuntu/zyh/data/data2", 200L*1024*1024*1024}};
+// 	    options->mutant_options.monitor_temp = true;
+// 	    options->mutant_options.migrate_sstables = true;
+// 	    options->mutant_options.calc_sst_placement = true;
+// 	    options->mutant_options.stg_cost_list = {0.528, 0.045};
+// 	    options->mutant_options.stg_cost_slo = 0.3;
+//    	    options->mutant_options.stg_cost_slo_epsilon = 0.1;            
+// #endif
 	} else if( dboption == 4 ) { // two path and has cache
+    printf("error not supported\n");
 	
-            options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                                    {"/home/ubuntu/zyh/data/data2", 800L*1024*1024*1024}};
+//             options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                                    {"/home/ubuntu/zyh/data/data2", 800L*1024*1024*1024}};
 
-#ifdef PCACHE	    
-	    // set pcache
-	    printf("set pcache\n");
-            rocksdb::Status status;
-            rocksdb::Env* env = rocksdb::Env::Default();
-            status = env->CreateDirIfMissing("/home/ubuntu/ssd/data/pcache");
-            assert(status.ok());
-            std::shared_ptr<rocksdb::Logger> read_cache_logger;
-	    uint64_t pcache_size = 6.25*1024*1024*1024ul;
-            status = rocksdb::NewPersistentmyCache(env,"/home/ubuntu/ssd/data/pcache",pcache_size, read_cache_logger,
-                            true, &block_based_options.persistent_cache);
-            assert(status.ok());
-#endif 	
+// #ifdef PCACHE	    
+// 	    // set pcache
+// 	    printf("set pcache\n");
+//             rocksdb::Status status;
+//             rocksdb::Env* env = rocksdb::Env::Default();
+//             status = env->CreateDirIfMissing("/home/ubuntu/ssd/data/pcache");
+//             assert(status.ok());
+//             std::shared_ptr<rocksdb::Logger> read_cache_logger;
+// 	    uint64_t pcache_size = 6.25*1024*1024*1024ul;
+//             status = rocksdb::NewPersistentmyCache(env,"/home/ubuntu/ssd/data/pcache",pcache_size, read_cache_logger,
+//                             true, &block_based_options.persistent_cache);
+//             assert(status.ok());
+// #endif 	
 	}
         
 	options->table_factory.reset(
@@ -186,6 +190,7 @@ namespace ycsbc {
 
     int RocksDB::Insert(const std::string &table, const std::string &key,
                         std::vector<KVPair> &values){
+        //fprintf(stderr,"Insert\n");
         rocksdb::Status s;
         string value;
         SerializeValues(values,value);
@@ -195,7 +200,7 @@ namespace ycsbc {
             cerr<<"insert error\n"<<endl;
             exit(0);
         }
-       
+       //fprintf(stderr,"Insert End\n");
         return DB::kOK;
     }
 

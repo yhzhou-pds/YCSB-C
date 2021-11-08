@@ -1,13 +1,13 @@
 
 # Rocksdb的头文件
-ROCKSDB_INCLUDE=/home/ubuntu/zyh/Cloud/rocksCloud/include
+ROCKSDB_INCLUDE=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/include
 # RocksDB 的静态链接库
-ROCKSDB_LIBRARY=/home/ubuntu/zyh/Cloud/rocksCloud/build/librocksdb.a  
-ROCKSDB_LIB=/home/ubuntu/zyh/Cloud/rocksCloud/build/
+ROCKSDB_LIBRARY=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/build/librocksdb.a  
+ROCKSDB_LIB=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/build/
 
 CC=g++
 CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB)
-LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lpmem -lnuma -lzstd -lhdr_histogram -lboost_regex -lboost_iostreams
+LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lnuma -lzstd -lhdr_histogram -lboost_regex -lboost_iostreams
 SUBDIRS= core db 
 SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc)
 OBJECTS=$(SUBSRCS:.cc=.o)

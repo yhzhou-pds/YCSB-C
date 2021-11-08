@@ -31,3 +31,5 @@ echo "run"
 ./ycsbc -db rocksdb -dbpath $dbpath -threads 1 -P $workload -run true -dboption $2 -dbstatistics true
 echo "run"
 
+./ycsbc -db rocksdb -dbpath /home/nvme0/wp2 -threads 1 -P workloads/workloada.spec -load true -dboption 2
+./ycsbc -db rocksdb -dbpath /home/nvme0/wp2 -threads 1 -P workloads/workloada.spec -run true -dboption 2

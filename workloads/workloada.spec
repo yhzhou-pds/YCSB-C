@@ -8,8 +8,8 @@
 fieldcount=1
 fieldlength=256
 
-recordcount=100000000
-operationcount=100000000
+recordcount=20000000
+operationcount=5000000
 workload=com.yahoo.ycsb.workloads.CoreWorkload
 
 readallfields=true
