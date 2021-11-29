@@ -1,13 +1,21 @@
 
 # Rocksdb的头文件
-ROCKSDB_INCLUDE=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/include
+# ROCKSDB_INCLUDE=/home/ubuntu/cloud/rocksdb-mutssd/include
+# # RocksDB 的静态链接库
+# ROCKSDB_LIBRARY=/home/ubuntu/cloud/rocksdb-mutssd/build/librocksdb.a  
+# ROCKSDB_LIB=/home/ubuntu/cloud/rocksdb-mutssd/build/build/
+# HDR_LIB=/usr/local/lib
+
+ROCKSDB_INCLUDE=/home/ubuntu/rocksdb-mutssd/include
 # RocksDB 的静态链接库
-ROCKSDB_LIBRARY=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/build/librocksdb.a  
-ROCKSDB_LIB=/home/zyh/wp/cloudrocksdb/rocksdb-mutssd/build/
+ROCKSDB_LIBRARY=/home/ubuntu/rocksdb-mutssd/build/librocksdb.a  
+ROCKSDB_LIB=/home/ubuntu/rocksdb-mutssd/build/build/
+HDR_LIB=/usr/local/lib
 
 CC=g++
 CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB)
-LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lnuma -lzstd -lhdr_histogram -lboost_regex -lboost_iostreams
+#LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lnuma -lzstd -lhdr_histogram -lboost_regex -lboost_iostreams -L$(HDR_LIB) 
+LDFLAGS= -lpthread -lz -lbz2 -llz4 -ldl -lsnappy -L$(HDR_LIB) -lhdr_histogram -lzstd ${ROCKSDB_LIBRARY} 
 SUBDIRS= core db 
 SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc)
 OBJECTS=$(SUBSRCS:.cc=.o)

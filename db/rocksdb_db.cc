@@ -55,13 +55,13 @@ namespace ycsbc {
       	      exit(0);
         }
         
-  	f_hdr_output_= std::fopen("/home/nvme0/wp/rocksdb-lat.hgrm", "w+");
+  	f_hdr_output_= std::fopen("/home/ubuntu/ssd_150g/rocksdb-lat.hgrm", "w+");
     	if(!f_hdr_output_) {
       	    std::perror("hdr output file opening failed");
       	    exit(0);
    	}
 	
-	f_hdr_hiccup_output_ = std::fopen("/home/nvme0/wp/rocksdb-lat.hiccup", "w+");	
+	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/ssd_150g/rocksdb-lat.hiccup", "w+");	
 	if(!f_hdr_hiccup_output_) {
       	    std::perror("hdr hiccup output file opening failed");
       	    exit(0);
@@ -87,12 +87,12 @@ namespace ycsbc {
         options->enable_pipelined_write = true;
 
 	rocksdb::BlockBasedTableOptions block_based_options;
-	options->max_bytes_for_level_base = 512ul * 1024 * 1024;
-	options->write_buffer_size = 128 * 1024 * 1024;
+	options->max_bytes_for_level_base = 256ul * 1024 * 1024;
+	options->write_buffer_size = 8 * 1024 * 1024;
 	options->level_compaction_dynamic_level_bytes = 1;
 	options->target_file_size_base = 8 * 1024 * 1024;
-	options->max_background_compactions = 2;
-	options->max_background_flushes = 2;
+	options->max_background_compactions = 4;
+	options->max_background_flushes = 4;
 
 	options->use_direct_reads=true;
 	options->use_direct_io_for_flush_and_compaction=true;
@@ -111,10 +111,31 @@ namespace ycsbc {
        	    options->db_paths = {{"/home/nvme0/wp/db0", 200L*1024*1024*1024}};
 	
 	} else if ( dboption == 2 ) { // two path and no cache
-	    options->db_paths = {{"/home/nvme0/wp/db0", 60L*1024*1024*1024},
-	                         {"/home/nvme0/wp/db1", 60L*1024*1024*1024},
-                             {"/home/nvme0/wp/db2", 60L*1024*1024*1024},
-                             {"/home/nvme0/wp/db3", 60L*1024*1024*1024}};	  
+	    // options->db_paths = {{"/home/ubuntu/ssd_150g", 60L*1024*1024*1024},
+	    //                      {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_4", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_5", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_6", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_7", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_8", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_9", 60L*1024*1024*1024}};	
+        
+        options->db_paths = {{"/home/ubuntu/ssd_150g", 60L*1024*1024*1024},
+	                         {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2_150g_4", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2_150g_5", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2_150g_6", 60L*1024*1024*1024},
+                             };	
+
+        // options->db_paths = {{"/home/ubuntu/ssd_300g", 60L*1024*1024*1024},
+	    //                      {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
+        //                      {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024}
+        //                      };  
 	
 	} else if( dboption == 3 ) { // mutant
     printf("error not supported\n");
