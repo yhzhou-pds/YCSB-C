@@ -55,13 +55,13 @@ namespace ycsbc {
       	      exit(0);
         }
         
-  	f_hdr_output_= std::fopen("/home/ubuntu/ssd_150g/rocksdb-lat.hgrm", "w+");
+  	f_hdr_output_= std::fopen("/home/ubuntu/nvme/zyh/rocksdb-lat.hgrm", "w+");
     	if(!f_hdr_output_) {
       	    std::perror("hdr output file opening failed");
       	    exit(0);
    	}
 	
-	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/ssd_150g/rocksdb-lat.hiccup", "w+");	
+	f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/nvme/zyh/rocksdb-lat.hiccup", "w+");	
 	if(!f_hdr_hiccup_output_) {
       	    std::perror("hdr hiccup output file opening failed");
       	    exit(0);
@@ -103,7 +103,8 @@ namespace ycsbc {
  	std::shared_ptr<const rocksdb::FilterPolicy> filter_policy(rocksdb::NewBloomFilterPolicy(24, 0));
 	block_based_options.filter_policy = filter_policy;
 	block_based_options.block_cache = rocksdb::NewLRUCache(8*1024);	
-	
+ 	
+	options->wal_dir = "/home/ubuntu/nvme/zyh";	
 	//
         int dboption = stoi(props["dboption"]);
 
@@ -111,63 +112,17 @@ namespace ycsbc {
        	    options->db_paths = {{"/home/nvme0/wp/db0", 200L*1024*1024*1024}};
 	
 	} else if ( dboption == 2 ) { // two path and no cache
-	    // options->db_paths = {{"/home/ubuntu/ssd_150g", 60L*1024*1024*1024},
-	    //                      {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_4", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_5", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_6", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_7", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_8", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_9", 60L*1024*1024*1024}};	
-        
-        options->db_paths = {{"/home/ubuntu/ssd_150g", 60L*1024*1024*1024},
-	                         {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
-                             {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
-                             {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024},
-                             {"/home/ubuntu/gp2_150g_4", 60L*1024*1024*1024},
-                             {"/home/ubuntu/gp2_150g_5", 60L*1024*1024*1024},
-                             {"/home/ubuntu/gp2_150g_6", 60L*1024*1024*1024},
+        options->db_paths = { {"/home/ubuntu/gp2/gp21", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2/gp22", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2/gp23", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2/gp24", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2/gp25", 60L*1024*1024*1024},
+                             {"/home/ubuntu/gp2/gp26", 60L*1024*1024*1024},
                              };	
+	options->mutssd_options.path_number=6;
+	options->mutssd_options.ops=2;
 
-        // options->db_paths = {{"/home/ubuntu/ssd_300g", 60L*1024*1024*1024},
-	    //                      {"/home/ubuntu/gp2_150g_1", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_2", 60L*1024*1024*1024},
-        //                      {"/home/ubuntu/gp2_150g_3", 60L*1024*1024*1024}
-        //                      };  
-	
-	} else if( dboption == 3 ) { // mutant
-    printf("error not supported\n");
-// #ifdef MUTANT 
-// 	    printf("set mutant options\n");
-// 	    options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                               	    {"/home/ubuntu/zyh/data/data2", 200L*1024*1024*1024}};
-// 	    options->mutant_options.monitor_temp = true;
-// 	    options->mutant_options.migrate_sstables = true;
-// 	    options->mutant_options.calc_sst_placement = true;
-// 	    options->mutant_options.stg_cost_list = {0.528, 0.045};
-// 	    options->mutant_options.stg_cost_slo = 0.3;
-//    	    options->mutant_options.stg_cost_slo_epsilon = 0.1;            
-// #endif
-	} else if( dboption == 4 ) { // two path and has cache
-    printf("error not supported\n");
-	
-//             options->db_paths = {{"/home/ubuntu/ssd/data/data1", 200L*1024*1024*1024},                                    {"/home/ubuntu/zyh/data/data2", 800L*1024*1024*1024}};
-
-// #ifdef PCACHE	    
-// 	    // set pcache
-// 	    printf("set pcache\n");
-//             rocksdb::Status status;
-//             rocksdb::Env* env = rocksdb::Env::Default();
-//             status = env->CreateDirIfMissing("/home/ubuntu/ssd/data/pcache");
-//             assert(status.ok());
-//             std::shared_ptr<rocksdb::Logger> read_cache_logger;
-// 	    uint64_t pcache_size = 6.25*1024*1024*1024ul;
-//             status = rocksdb::NewPersistentmyCache(env,"/home/ubuntu/ssd/data/pcache",pcache_size, read_cache_logger,
-//                             true, &block_based_options.persistent_cache);
-//             assert(status.ok());
-// #endif 	
-	}
+	} else {}
         
 	options->table_factory.reset(
                rocksdb::NewBlockBasedTableFactory(block_based_options));

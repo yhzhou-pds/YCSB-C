@@ -6,10 +6,10 @@
 # ROCKSDB_LIB=/home/ubuntu/cloud/rocksdb-mutssd/build/build/
 # HDR_LIB=/usr/local/lib
 
-ROCKSDB_INCLUDE=/home/ubuntu/rocksdb-mutssd/include
+ROCKSDB_INCLUDE=/home/ubuntu/zyh/rocksdb-cf/rocksdb-mutssd/include
 # RocksDB 的静态链接库
-ROCKSDB_LIBRARY=/home/ubuntu/rocksdb-mutssd/build/librocksdb.a  
-ROCKSDB_LIB=/home/ubuntu/rocksdb-mutssd/build/build/
+ROCKSDB_LIBRARY=/home/ubuntu/zyh/rocksdb-cf/rocksdb-mutssd/build/librocksdb.a  
+ROCKSDB_LIB=/home/ubuntu/zyh/rocksdb-cf/rocksdb-mutssd/build/
 HDR_LIB=/usr/local/lib
 
 CC=g++
