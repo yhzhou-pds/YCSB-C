@@ -157,7 +157,8 @@ inline int Client::TransactionUpdate() {
 
 inline int Client::TransactionInsert() {
   const std::string &table = workload_.NextTable();
-  const std::string &key = workload_.NextSequenceKey();
+  // const std::string &key = workload_.NextSequenceKey();
+  const std::string &key = workload_.NextTransactionKey();
   std::vector<DB::KVPair> values;
   workload_.BuildValues(values);
   return db_.Insert(table, key, values);

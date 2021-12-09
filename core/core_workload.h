@@ -165,6 +165,8 @@ class CoreWorkload {
     if (key_chooser_) delete key_chooser_;
     if (field_chooser_) delete field_chooser_;
     if (scan_len_chooser_) delete scan_len_chooser_;
+    if (fp_ != NULL) fclose(fp_);
+    if (fp_load_ != NULL) fclose(fp_load_);
   }
   
  protected:
@@ -184,25 +186,49 @@ class CoreWorkload {
   CounterGenerator insert_key_sequence_;
   bool ordered_inserts_;
   size_t record_count_;
+  FILE* fp_;
+  FILE* fp_load_;
 };
 
 inline std::string CoreWorkload::NextSequenceKey() {
-  uint64_t key_num = key_generator_->Next();
+  //uint64_t key_num = key_generator_->Next();
+  if(fp_load_==nullptr){
+    if((fp_load_=fopen("/home/ubuntu/trace/load_trace.data","r"))==NULL){
+    	printf("open trace error\n");
+    	exit(0);
+    }
+  }
+  uint64_t key_num;
+  if(fscanf(fp_load_,"%lu\n",&key_num) == EOF) {
+    rewind(fp_load_);
+    fscanf(fp_load_,"%lu\n",&key_num);
+  }
   return BuildKeyName(key_num);
 }
 
 inline std::string CoreWorkload::NextTransactionKey() {
   uint64_t key_num;
-  do {
-    key_num = key_chooser_->Next();
-  } while (key_num > insert_key_sequence_.Last());
+  //do {
+  //  key_num = key_chooser_->Next();
+  //} while (key_num > insert_key_sequence_.Last());
+  
+  if(fp_==NULL){
+     if((fp_=fopen("/home/ubuntu/trace/trace_zyh.data","r"))==NULL){
+          printf("open trace_zyh.data error\n");
+	  exit(1);
+     }
+  }
+  if(fscanf(fp_,"%lu\n",&key_num)==EOF){
+     rewind(fp_);
+     fscanf(fp_,"%lu\n",&key_num);
+  }
   return BuildKeyName(key_num);
 }
 
 inline std::string CoreWorkload::BuildKeyName(uint64_t key_num) {
-  if (!ordered_inserts_) {
-    key_num = utils::Hash(key_num);
-  }
+//  if (!ordered_inserts_) {
+//    key_num = utils::Hash(key_num);
+//  }
   return std::string("user").append(std::to_string(key_num));
 }
 

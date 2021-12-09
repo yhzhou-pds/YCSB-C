@@ -162,7 +162,18 @@ void CoreWorkload::Init(const utils::Properties &p) {
     throw utils::Exception("Distribution not allowed for scan length: " +
         scan_len_dist);
   }
+
+  if((fp_=fopen("/home/ubuntu/trace/trace_zyh.data","r"))==NULL){
+     printf("open trace_zyh.data error\n");
+     exit(1);
+  }
+
+  if((fp_load_=fopen("/home/ubuntu/trace/load_trace.data","r"))==NULL){
+     printf("open trace_zyh.data error\n");
+     exit(1);
+  }
 }
+
 
 ycsbc::Generator<uint64_t> *CoreWorkload::GetFieldLenGenerator(
     const utils::Properties &p) {

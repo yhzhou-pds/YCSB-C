@@ -90,6 +90,7 @@ namespace ycsbc {
 	options->max_bytes_for_level_base = 256ul * 1024 * 1024;
 	options->write_buffer_size = 8 * 1024 * 1024;
 	options->level_compaction_dynamic_level_bytes = 1;
+	options->writable_file_max_buffer_size=16*1024*1024;
 	options->target_file_size_base = 8 * 1024 * 1024;
 	options->max_background_compactions = 4;
 	options->max_background_flushes = 4;
@@ -120,7 +121,7 @@ namespace ycsbc {
                              {"/home/ubuntu/gp2/gp26", 60L*1024*1024*1024},
                              };	
 	options->mutssd_options.path_number=6;
-	options->mutssd_options.ops=2;
+	options->mutssd_options.ops=1;
 
 	} else {}
         
@@ -173,7 +174,7 @@ namespace ycsbc {
 	s = db_->Put(rocksdb::WriteOptions(), key, value);
         
 	if(!s.ok()){
-            cerr<<"insert error\n"<<endl;
+            cerr<<"insert error\n"<< s.ToString() << endl;
             exit(0);
         }
        //fprintf(stderr,"Insert End\n");
