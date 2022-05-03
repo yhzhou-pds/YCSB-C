@@ -12,6 +12,7 @@
 #include "skewed_latest_generator.h"
 #include "const_generator.h"
 #include "core_workload.h"
+#include "statistics.h"
 
 #include <string>
 
@@ -163,15 +164,8 @@ void CoreWorkload::Init(const utils::Properties &p) {
         scan_len_dist);
   }
 
-  if((fp_=fopen("/home/ubuntu/trace/trace_zyh.data","r"))==NULL){
-     printf("open trace_zyh.data error\n");
-     exit(1);
-  }
-
-  if((fp_load_=fopen("/home/ubuntu/trace/load_trace.data","r"))==NULL){
-     printf("open trace_zyh.data error\n");
-     exit(1);
-  }
+  stat_ = new Statistics();
+  stat_->Init();
 }
 
 
@@ -209,3 +203,8 @@ void CoreWorkload::BuildUpdate(std::vector<ycsbc::DB::KVPair> &update) {
   update.push_back(pair);
 }
 
+
+void CoreWorkload::GetInfo(int op,uint64_t tx_xtime){
+  stat_->RecordTime(op, tx_xtime);
+  stat_->AddIOPS();
+}

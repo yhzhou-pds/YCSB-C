@@ -20,18 +20,18 @@ using std::endl;
 namespace ycsbc {
     class RocksDB : public DB{
     public :
-        struct hdr_histogram* hdr_ = NULL;
-        struct hdr_histogram* hdr_last_1s_ = NULL;
-        struct hdr_histogram* hdr_get_= NULL;
-        struct hdr_histogram* hdr_put_= NULL;
-        struct hdr_histogram* hdr_update_ = NULL;
-        struct hdr_histogram* hdr_scan_ = NULL;
-        struct hdr_histogram* hdr_delete_ = NULL;
-	struct hdr_histogram* hdr_rmw_ = NULL;
+    //     struct hdr_histogram* hdr_ = NULL;
+    //     struct hdr_histogram* hdr_last_1s_ = NULL;
+    //     struct hdr_histogram* hdr_get_= NULL;
+    //     struct hdr_histogram* hdr_put_= NULL;
+    //     struct hdr_histogram* hdr_update_ = NULL;
+    //     struct hdr_histogram* hdr_scan_ = NULL;
+    //     struct hdr_histogram* hdr_delete_ = NULL;
+	//     struct hdr_histogram* hdr_rmw_ = NULL;
 
-	void latency_hiccup(uint64_t iops);
-	std::FILE* f_hdr_output_;
-	std::FILE* f_hdr_hiccup_output_;
+	// void latency_hiccup(uint64_t iops);
+	// std::FILE* f_hdr_output_;
+	// std::FILE* f_hdr_hiccup_output_;
 
 
         RocksDB(const char *dbfilename, utils::Properties &props);
@@ -52,17 +52,11 @@ namespace ycsbc {
 
         int Delete(const std::string &table, const std::string &key);
 
-	void RecordTime(int op,uint64_t tx_xtime);
+	    // void RecordTime(int op,uint64_t tx_xtime);
 
         void PrintStats();
 
         bool HaveBalancedDistribution();
-
-        uint64_t get_now_micros(){
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            return (tv.tv_sec) * 1000000 + tv.tv_usec;
-        }
 
         ~RocksDB();
 

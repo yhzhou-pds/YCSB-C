@@ -38,9 +38,9 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
   ycsbc::Client client(*db, *wl);
   int oks = 0;
   int next_report_ = 0;
-  static uint64_t tiktok_start = get_now_micros();
-  static uint64_t tiktoks = 0;
-  static uint64_t iops = 0;
+  // static uint64_t tiktok_start = get_now_micros();
+  // static uint64_t tiktoks = 0;
+  // static uint64_t iops = 0;
 
   for (int i = 0; i < num_ops; ++i) {
 
@@ -59,14 +59,6 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
       oks += client.DoInsert();
     } else {
       oks += client.DoTransaction();
-      tiktoks = get_now_micros() - tiktok_start;
-      iops++;
-      if (tiktoks >= 1000000) {
-	      db->latency_hiccup(iops);
-	      tiktok_start = get_now_micros();
-	      tiktoks = 0;
-	      iops = 0;
-      }
     }
   }
   db->Close();

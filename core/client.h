@@ -44,7 +44,11 @@ inline bool Client::DoInsert() {
   std::string key = workload_.NextSequenceKey();
   std::vector<DB::KVPair> pairs;
   workload_.BuildValues(pairs);
-  return (db_.Insert(workload_.NextTable(), key, pairs) == DB::kOK);
+  uint64_t start_time = get_now_micros();
+  int status = db_.Insert(workload_.NextTable(), key, pairs);
+  uint64_t op_time = (get_now_micros() - start_time );
+  workload_.GetInfo(1,op_time); 
+  return (status == DB::kOK);
 }
 
 inline bool Client::DoTransaction() {
@@ -57,35 +61,35 @@ inline bool Client::DoTransaction() {
       op_time = (get_now_micros() - start_time );
       ops_time[READ] += op_time;
       ops_cnt[READ]++;
-      db_.RecordTime(2,op_time);
+      workload_.GetInfo(2,op_time);
       break;
     case UPDATE:
       status = TransactionUpdate();
       op_time = (get_now_micros() - start_time );
       ops_time[UPDATE] += op_time;
       ops_cnt[UPDATE]++;
-      db_.RecordTime(3,op_time);
+      workload_.GetInfo(3,op_time);
       break;
     case INSERT:
       status = TransactionInsert();
       op_time = (get_now_micros() - start_time );
       ops_time[INSERT] += op_time;
       ops_cnt[INSERT]++;
-      db_.RecordTime(1,op_time);
+      workload_.GetInfo(1,op_time);
       break;
     case SCAN:
       status = TransactionScan();
       op_time = (get_now_micros() - start_time );
       ops_time[SCAN] += op_time;
       ops_cnt[SCAN]++;
-      db_.RecordTime(4,op_time);
+      workload_.GetInfo(4,op_time);
       break;
     case READMODIFYWRITE:
       status = TransactionReadModifyWrite();
       op_time = (get_now_micros() - start_time );
       ops_time[READMODIFYWRITE] += op_time;
       ops_cnt[READMODIFYWRITE]++;
-      db_.RecordTime(5,op_time);
+      workload_.GetInfo(5,op_time);
       break;
     default:
       throw utils::Exception("Operation request is not recognized!");

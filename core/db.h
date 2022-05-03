@@ -94,9 +94,9 @@ class DB {
 
   virtual void PrintStats() {};
  
-  virtual void RecordTime(int op,uint64_t tx_time) {};
+  // virtual void RecordTime(int op,uint64_t tx_time) {};
 
-  virtual void latency_hiccup(uint64_t iops) {};
+  // virtual void latency_hiccup(uint64_t iops) {};
 
   virtual ~DB() { }
 };
