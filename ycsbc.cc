@@ -6,17 +6,18 @@
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
-#include <cstring>
-#include <string>
-#include <iostream>
-#include <vector>
-#include <future>
-#include <unistd.h>
-#include "core/utils.h"
-#include "core/timer.h"
 #include "core/client.h"
 #include "core/core_workload.h"
+#include "core/timer.h"
+#include "core/utils.h"
 #include "db/db_factory.h"
+#include <atomic>
+#include <cstring>
+#include <future>
+#include <iostream>
+#include <string>
+#include <unistd.h>
+#include <vector>
 
 using namespace std;
 

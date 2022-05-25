@@ -10,13 +10,15 @@
 #ifndef YCSB_C_STATISTICS_H_
 #define YCSB_C_STATISTICS_H_
 
-#include <stdio.h>
-#include <cstdint>
 #include <atomic>
-#include <stdlib.h>
-#include <thread> 
+#include <cstdint>
+#include <functional>
 #include <hdr/hdr_histogram.h>
+#include <mutex>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
+#include <thread>
 // #include "timer.h"
 
 namespace ycsbc {

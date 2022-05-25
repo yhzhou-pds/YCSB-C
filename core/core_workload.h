@@ -9,15 +9,17 @@
 #ifndef YCSB_C_CORE_WORKLOAD_H_
 #define YCSB_C_CORE_WORKLOAD_H_
 
-#include <vector>
-#include <string>
-#include "db.h"
-#include "properties.h"
-#include "generator.h"
-#include "discrete_generator.h"
 #include "counter_generator.h"
-#include "utils.h"
+#include "db.h"
+#include "discrete_generator.h"
+#include "generator.h"
+#include "properties.h"
 #include "statistics.h"
+#include "utils.h"
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace ycsbc {
 
@@ -135,6 +137,23 @@ class CoreWorkload {
   static const std::string OPERATION_COUNT_PROPERTY;
 
   ///
+  /// The name of the property for SINE workload
+  /// qps like f(x) = a * sin(b * x + c) + d
+  ///
+  static const std::string SINE_RATE;
+  static const std::string SINE_RATE_DEFAULT;
+  static const std::string SINE_A;
+  static const std::string SINE_A_DEFAULT;
+  static const std::string SINE_B;
+  static const std::string SINE_B_DEFAULT;
+  static const std::string SINE_C;
+  static const std::string SINE_C_DEFAULT;
+  static const std::string SINE_D;
+  static const std::string SINE_D_DEFAULT;
+  static const std::string SINE_MIX_RATE_INTERVAL_MILLISEONCES;
+  static const std::string SINE_MIX_RATE_INTERVAL_MILLISEONCES_DEFAULT;
+
+  ///
   /// Initialize the scenario.
   /// Called once, in the main client thread, before any operations are started.
   ///
@@ -149,27 +168,37 @@ class CoreWorkload {
   virtual Operation NextOperation() { return op_chooser_.Next(); }
   virtual std::string NextFieldName();
   virtual size_t NextScanLength() { return scan_len_chooser_->Next(); }
-  
+  virtual uint64_t NextReqTime();
+
   bool read_all_fields() const { return read_all_fields_; }
   bool write_all_fields() const { return write_all_fields_; }
+  bool use_sine_rate() const { return sine_rate_; }
 
   void GetInfo(int op,uint64_t tx_xtime);
 
-  CoreWorkload() :
-      field_count_(0), read_all_fields_(false), write_all_fields_(false),
-      field_len_generator_(NULL), key_generator_(NULL), key_chooser_(NULL),
-      field_chooser_(NULL), scan_len_chooser_(NULL), insert_key_sequence_(3),
-      ordered_inserts_(true), record_count_(0),stat_(NULL) {
-  }
-  
+  CoreWorkload()
+      : field_count_(0), read_all_fields_(false), write_all_fields_(false),
+        field_len_generator_(NULL), key_generator_(NULL),
+        sine_rate_generator_(nullptr), key_chooser_(NULL), field_chooser_(NULL),
+        scan_len_chooser_(NULL), insert_key_sequence_(3),
+        ordered_inserts_(true), sine_rate_(false), record_count_(0),
+        stat_(NULL) {}
+
   virtual ~CoreWorkload() {
-    if (field_len_generator_) delete field_len_generator_;
-    if (key_generator_) delete key_generator_;
-    if (key_chooser_) delete key_chooser_;
-    if (field_chooser_) delete field_chooser_;
-    if (scan_len_chooser_) delete scan_len_chooser_;
+    if (field_len_generator_)
+      delete field_len_generator_;
+    if (key_generator_)
+      delete key_generator_;
+    if (sine_rate_generator_)
+      delete sine_rate_generator_;
+    if (key_chooser_)
+      delete key_chooser_;
+    if (field_chooser_)
+      delete field_chooser_;
+    if (scan_len_chooser_)
+      delete scan_len_chooser_;
   }
-  
+
  protected:
   static Generator<uint64_t> *GetFieldLenGenerator(const utils::Properties &p);
   std::string BuildKeyName(uint64_t key_num);
@@ -180,12 +209,14 @@ class CoreWorkload {
   bool write_all_fields_;
   Generator<uint64_t> *field_len_generator_;
   Generator<uint64_t> *key_generator_;
+  Generator<uint64_t> *sine_rate_generator_;
   DiscreteGenerator<Operation> op_chooser_;
   Generator<uint64_t> *key_chooser_;
   Generator<uint64_t> *field_chooser_;
   Generator<uint64_t> *scan_len_chooser_;
   CounterGenerator insert_key_sequence_;
   bool ordered_inserts_;
+  bool sine_rate_;
   size_t record_count_;
   Statistics* stat_;
 };
@@ -201,6 +232,15 @@ inline std::string CoreWorkload::NextTransactionKey() {
     key_num = key_chooser_->Next();
   } while (key_num > insert_key_sequence_.Last());
   return BuildKeyName(key_num);
+}
+
+inline uint64_t CoreWorkload::NextReqTime() {
+  uint64_t time = 0;
+  if (sine_rate_) {
+    assert(sine_rate_generator_ != nullptr);
+    time = sine_rate_generator_->Next();
+  }
+  return time;
 }
 
 inline std::string CoreWorkload::BuildKeyName(uint64_t key_num) {

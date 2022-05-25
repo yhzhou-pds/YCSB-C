@@ -9,10 +9,13 @@
 #ifndef YCSB_C_CLIENT_H_
 #define YCSB_C_CLIENT_H_
 
-#include <string>
-#include "db.h"
 #include "core_workload.h"
+#include "db.h"
+#include "timer.h"
 #include "utils.h"
+#include <cstdio>
+#include <string>
+#include <unistd.h>
 
 extern uint64_t ops_cnt[ycsbc::Operation::READMODIFYWRITE + 1] ;    //操作个数
 extern uint64_t ops_time[ycsbc::Operation::READMODIFYWRITE + 1] ;   //微秒
@@ -55,6 +58,14 @@ inline bool Client::DoTransaction() {
   int status = -1;
   uint64_t start_time = get_now_micros();
   uint64_t op_time;
+
+  if (workload_.use_sine_rate()) {
+    uint64_t send_us = workload_.NextReqTime();
+    if (start_time < send_us) {
+      usleep(send_us - start_time);
+    }
+  }
+
   switch (workload_.NextOperation()) {
     case READ:
       status = TransactionRead();
