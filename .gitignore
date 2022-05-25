@@ -43,3 +43,6 @@ ycsbc
 
 NVM_LOG
 compaction.csv
+
+.cache
+compile_commands.json

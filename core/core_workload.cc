@@ -6,14 +6,16 @@
 //  Copyright (c) 2014 Jinglei Ren <jinglei@ren.systems>.
 //
 
+#include "core_workload.h"
+#include "const_generator.h"
+#include "scrambled_zipfian_generator.h"
+#include "sine_rate_generator.h"
+#include "skewed_latest_generator.h"
+#include "statistics.h"
 #include "uniform_generator.h"
 #include "zipfian_generator.h"
-#include "scrambled_zipfian_generator.h"
-#include "skewed_latest_generator.h"
-#include "const_generator.h"
-#include "core_workload.h"
-#include "statistics.h"
 
+#include <cstdio>
 #include <string>
 
 using ycsbc::CoreWorkload;
@@ -74,6 +76,21 @@ const string CoreWorkload::INSERT_START_DEFAULT = "0";
 const string CoreWorkload::RECORD_COUNT_PROPERTY = "recordcount";
 const string CoreWorkload::OPERATION_COUNT_PROPERTY = "operationcount";
 
+const string CoreWorkload::SINE_RATE = "sine_rate";
+const string CoreWorkload::SINE_RATE_DEFAULT = "false";
+const string CoreWorkload::SINE_A = "sine_a";
+const string CoreWorkload::SINE_A_DEFAULT = "1";
+const string CoreWorkload::SINE_B = "sine_b";
+const string CoreWorkload::SINE_B_DEFAULT = "1";
+const string CoreWorkload::SINE_C = "sine_c";
+const string CoreWorkload::SINE_C_DEFAULT = "0";
+const string CoreWorkload::SINE_D = "sine_d";
+const string CoreWorkload::SINE_D_DEFAULT = "1";
+const string CoreWorkload::SINE_MIX_RATE_INTERVAL_MILLISEONCES =
+    "sine_mix_rate_interval_milliseconds";
+const string CoreWorkload::SINE_MIX_RATE_INTERVAL_MILLISEONCES_DEFAULT =
+    "10000";
+
 void CoreWorkload::Init(const utils::Properties &p) {
   table_name_ = p.GetProperty(TABLENAME_PROPERTY,TABLENAME_DEFAULT);
   
@@ -106,7 +123,16 @@ void CoreWorkload::Init(const utils::Properties &p) {
                                                     READ_ALL_FIELDS_DEFAULT));
   write_all_fields_ = utils::StrToBool(p.GetProperty(WRITE_ALL_FIELDS_PROPERTY,
                                                      WRITE_ALL_FIELDS_DEFAULT));
-  
+
+  sine_rate_ = utils::StrToBool(p.GetProperty(SINE_RATE, SINE_RATE_DEFAULT));
+  double sine_a = std::stod(p.GetProperty(SINE_A, SINE_A_DEFAULT));
+  double sine_b = std::stod(p.GetProperty(SINE_B, SINE_B_DEFAULT));
+  double sine_c = std::stod(p.GetProperty(SINE_C, SINE_C_DEFAULT));
+  double sine_d = std::stod(p.GetProperty(SINE_D, SINE_D_DEFAULT));
+  int sine_mix_rate_interval_milliseconds =
+      std::stoi(p.GetProperty(SINE_MIX_RATE_INTERVAL_MILLISEONCES,
+                              SINE_MIX_RATE_INTERVAL_MILLISEONCES_DEFAULT));
+
   if (p.GetProperty(INSERT_ORDER_PROPERTY, INSERT_ORDER_DEFAULT) == "hashed") {
     ordered_inserts_ = false;
   } else {
@@ -162,6 +188,11 @@ void CoreWorkload::Init(const utils::Properties &p) {
   } else {
     throw utils::Exception("Distribution not allowed for scan length: " +
         scan_len_dist);
+  }
+
+  if (sine_rate_) {
+    sine_rate_generator_ = new SineRateGenerator(
+        sine_a, sine_b, sine_c, sine_d, sine_mix_rate_interval_milliseconds);
   }
 
   stat_ = new Statistics();
