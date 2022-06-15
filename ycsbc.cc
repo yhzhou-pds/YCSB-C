@@ -17,6 +17,7 @@
 #include "core/client.h"
 #include "core/core_workload.h"
 #include "db/db_factory.h"
+#include "ratelimiter/rate_limiter.h"
 
 using namespace std;
 
@@ -36,6 +37,8 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
     bool is_loading) {
   db->Init();
   ycsbc::Client client(*db, *wl);
+  ycsbc::RateLimiter r(5000); 
+
   int oks = 0;
   int next_report_ = 0;
   // static uint64_t tiktok_start = get_now_micros();
@@ -43,7 +46,6 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
   // static uint64_t iops = 0;
 
   for (int i = 0; i < num_ops; ++i) {
-
     if (i >= next_report_) {
         if      (next_report_ < 1000)   next_report_ += 100;
         else if (next_report_ < 5000)   next_report_ += 500;
@@ -59,6 +61,7 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
       oks += client.DoInsert();
     } else {
       oks += client.DoTransaction();
+      r.pass();
     }
   }
   db->Close();

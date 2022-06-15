@@ -17,7 +17,7 @@ CFLAGS=-std=c++11 -g -Wall -pthread -I./ -I$(ROCKSDB_INCLUDE) -L$(ROCKSDB_LIB)
 #LDFLAGS= -lpthread -lrocksdb -lz -lbz2 -llz4 -ldl -lsnappy -lnuma -lzstd -lhdr_histogram -lboost_regex -lboost_iostreams -L$(HDR_LIB) 
 LDFLAGS= -lpthread -lz -lbz2 -llz4 -ldl -lsnappy -L$(HDR_LIB) -lhdr_histogram -lzstd ${ROCKSDB_LIBRARY} 
 SUBDIRS= core db 
-SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc)
+SUBSRCS=$(wildcard core/*.cc) $(wildcard db/*.cc) $(wildcard ratelimiter/*.cc)
 OBJECTS=$(SUBSRCS:.cc=.o)
 EXEC=ycsbc
 

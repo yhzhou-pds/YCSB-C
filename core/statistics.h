@@ -17,6 +17,7 @@
 #include <thread> 
 #include <hdr/hdr_histogram.h>
 #include <sys/time.h>
+#include <functional>
 // #include "timer.h"
 
 namespace ycsbc {
@@ -42,7 +43,7 @@ class Statistics {
       printf("open log file error\n");
       exit(1);
     }
-    fprintf(log_, "IOPS   #mean    95th    99th    99.99th\n");
+    fprintf(log_, "time   IOPS   #mean    95th    99th    99.99th\n");
 
     mutex_.lock();
     // 统计信息 hdr初始化
@@ -121,7 +122,8 @@ class Statistics {
       // IOPS 
       uint64_t iops = iops_.exchange(0); 
       mutex_.lock();
-      fprintf(log_, "%8lu %-11.2lf %-8ld %-8ld %-8ld %-8ld\n",
+      fprintf(log_, "%8.2f %8lu %-11.2lf %-8ld %-8ld %-8ld %-8ld\n",
+                get_now()*1.0/1000000,
                 iops,
                 hdr_mean(hdr_last_1s_),
                 hdr_value_at_percentile(hdr_last_1s_, 95),

@@ -18,56 +18,8 @@
 using namespace std;
 
 namespace ycsbc {
-
-    // void RocksDB::latency_hiccup(uint64_t iops) {
-    //     //fprintf(f_hdr_hiccup_output_, "mean     95th     99th     99.99th   IOPS");
-    //     fprintf(f_hdr_hiccup_output_, "%-11.2lf %-8ld %-8ld %-8ld %-8ld\n",
-    //           hdr_mean(hdr_last_1s_),
-    //           hdr_value_at_percentile(hdr_last_1s_, 95),
-    //           hdr_value_at_percentile(hdr_last_1s_, 99),
-    //           hdr_value_at_percentile(hdr_last_1s_, 99.99),
-	// 		  iops);
-    //     hdr_reset(hdr_last_1s_);
-    //     fflush(f_hdr_hiccup_output_);
-    // }
-
     RocksDB::RocksDB(const char *dbfilename, utils::Properties &props) :noResult(0){
     
-    //     int r = hdr_init(1,INT64_C(3600000000),3,&hdr_);
-    //     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_last_1s_);
-    //     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_get_);
-    //     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_put_);
-    //     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_update_);
-    //     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_scan_);
-	//     r |= hdr_init(1, INT64_C(3600000000), 3, &hdr_rmw_);
-
-    //     if((0 != r) || (NULL == hdr_) || (NULL == hdr_last_1s_) 
-	// 	    || (NULL == hdr_get_) || (NULL == hdr_put_)
-	// 	    || (NULL == hdr_scan_) || (NULL == hdr_rmw_) 
-	// 	    || (NULL == hdr_update_) || (23552 < hdr_->counts_len)) {
-	//       cout << "DEBUG- init hdrhistogram failed." << endl;
-    //   	      cout << "DEBUG- r=" << r << endl;
-	//       cout << "DEBUG- histogram=" << &hdr_ << endl;
-	//       cout << "DEBUG- counts_len=" << hdr_->counts_len << endl;
-	//       cout << "DEBUG- counts:" << hdr_->counts << ", total_c:" << hdr_->total_count << endl;
-    //   	      cout << "DEBUG- lowest:" << hdr_->lowest_discernible_value << ", max:" <<hdr_->highest_trackable_value << endl;
-    //   	      free(hdr_);
-    //   	      exit(0);
-    //     }
-        
-  	// f_hdr_output_= std::fopen("/home/ubuntu/nvme/zyh/rocksdb-lat.hgrm", "w+");
-    // 	if(!f_hdr_output_) {
-    //   	    std::perror("hdr output file opening failed");
-    //   	    exit(0);
-   	// }
-	
-	// f_hdr_hiccup_output_ = std::fopen("/home/ubuntu/nvme/zyh/rocksdb-lat.hiccup", "w+");	
-	// if(!f_hdr_hiccup_output_) {
-    //   	    std::perror("hdr hiccup output file opening failed");
-    //   	    exit(0);
-    // 	}   
-    // 	fprintf(f_hdr_hiccup_output_, "#mean       95th    99th    99.99th    IOPS\n");
-
         //set option
         rocksdb::Options options;
         SetOptions(&options, props);
@@ -86,12 +38,14 @@ namespace ycsbc {
         options->compression = rocksdb::kNoCompression;
         options->enable_pipelined_write = true;
 
+        options->statistics = rocksdb::CreateDBStatistics();
+
         rocksdb::BlockBasedTableOptions block_based_options;
         options->max_bytes_for_level_base = 256ul * 1024 * 1024;
-        options->write_buffer_size = 8 * 1024 * 1024;
+        options->write_buffer_size = 64 * 1024 * 1024;
         options->level_compaction_dynamic_level_bytes = 1;
-        options->writable_file_max_buffer_size=16*1024*1024;
-        options->target_file_size_base = 8 * 1024 * 1024;
+        options->writable_file_max_buffer_size=128 * 1024 * 1024;
+        options->target_file_size_base = 64 * 1024 * 1024;
         options->max_background_compactions = 4;
         options->max_background_flushes = 4;
 
@@ -110,7 +64,7 @@ namespace ycsbc {
         int dboption = stoi(props["dboption"]);
 
         if ( dboption == 0) {  //RocksDB
-                options->db_paths = {{"/home/nvme0/zyh", 200L*1024*1024*1024}};
+                options->db_paths = {{"/home/data/vol1/zyh", 200L*1024*1024*1024}};
         
         } else if ( dboption == 1 ) { // two path and no cache
             options->db_paths = { {"/home/ubuntu/gp2/gp21", 60L*1024*1024*1024},
