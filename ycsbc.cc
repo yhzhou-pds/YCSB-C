@@ -37,13 +37,10 @@ int DelegateClient(ycsbc::DB *db, ycsbc::CoreWorkload *wl, const int num_ops,
     bool is_loading) {
   db->Init();
   ycsbc::Client client(*db, *wl);
-  ycsbc::RateLimiter r(5000); 
+  ycsbc::RateLimiter r(1000); 
 
   int oks = 0;
   int next_report_ = 0;
-  // static uint64_t tiktok_start = get_now_micros();
-  // static uint64_t tiktoks = 0;
-  // static uint64_t iops = 0;
 
   for (int i = 0; i < num_ops; ++i) {
     if (i >= next_report_) {
